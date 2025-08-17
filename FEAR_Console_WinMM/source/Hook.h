@@ -1,0 +1,55 @@
+#pragma once
+
+#include <Windows.h>
+#include "global.h"
+#include "detours.h"
+#include "d3d9.h"
+#include "d3dx9.h"
+#include "../ImGui/imgui.h"
+#include "../ImGui/imgui_impl_dx9.h"
+#include "../ImGui/imgui_impl_win32.h"
+
+
+extern IMGUI_IMPL_API LRESULT ImGui_ImplWin32_WndProcHandler(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
+using tEndScene = HRESULT(APIENTRY*)(LPDIRECT3DDEVICE9 pDevice);
+using tSetRenderState = HRESULT(APIENTRY*)(LPDIRECT3DDEVICE9 pDevice, D3DRENDERSTATETYPE State, DWORD Value);
+using tSetTexture = HRESULT(APIENTRY*)(LPDIRECT3DDEVICE9 pDevice, DWORD Stage, IDirect3DBaseTexture9* pTexture);
+using tReset = HRESULT(APIENTRY*)(D3DPRESENT_PARAMETERS* pPresentationParameters);
+
+class Hook
+{
+public:
+	static IDirect3DDevice9* pDevice;
+	static tEndScene original_IDirect3DDevicee9_EndScene;
+	static tSetRenderState original_IDirect3DDevice9_SetRenderState;
+	static tSetTexture original_IDirect3DDevice9_SetTexture;
+	static HWND window;
+	static HMODULE hDDLModule;
+
+	static uintptr_t baseAddress;
+	static uintptr_t gameClientShellAddress;
+	static bool bWireframe;
+
+	static void HookDirectX();
+	static void UnHookDirectX();
+	static void HookWindow();
+	static void UnHookWindow();
+
+	static tCPrintToConsole original_CPrintToConsole;
+	static RunConsoleCommand_t original_RunConsoleCommand;
+	static ClientGlob* pClientGlob;
+
+	static void SetPlayerMovement(bool allow);
+
+private:
+	static int windowHeight, windowWidth;
+	static void* d3d9Device[119];
+	static WNDPROC OWndProc;
+	static tReset original_IDirect3DDevice9_Reset;
+
+	static BOOL CALLBACK enumWind(HWND handle, LPARAM lp);
+	static HWND GetProcessWindow();
+	static BOOL GetD3D9Device(void** pTable, size_t size);
+	static LRESULT WINAPI WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
+	static HRESULT APIENTRY hkReset(D3DPRESENT_PARAMETERS* pPresentationParameters);
+};
